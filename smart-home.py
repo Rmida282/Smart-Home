@@ -1,11 +1,13 @@
 ###Importation de les bibliotheques nécessaire###
+import time, datetime
 import RPi.GPIO as GPIO
 import telepot
 from telepot.loop import MessageLoop
-import time , datetime
-import sys
+import os
+import pygame, sys
+from subprocess import call
 now = datetime.datetime.now()
-2. Configuration des Pin IN/outs:
+####### Configuration des Pin IN/outs:
 ###Configuration GPIO######
 boutt = 14
 led1 = 2 
@@ -30,8 +32,8 @@ GPIO.setup(led3, GPIO.OUT)
 GPIO.output(led3,0)
 GPIO.setup(14, GPIO.IN , pull_up_down=GPIO.PUD_DOWN)
 GPIO.setwarnings(False)
- 3. Définition des fonctions :
-fonction de déctection par boutton 
+##########################Définition des fonctions :
+################fonction de déctection par boutton 
 def prebutt():
     telegram_bot.sendMessage (chat_id, str("detection mode activated Sir"))
     while True():
@@ -42,30 +44,29 @@ def prebutt():
             telegram_bot.sendMessage(chat_id,open('11.jpg ','rb')) 
             time.sleep(3)
             P.ChangeDutyCycle(12.5) #180 degreé
- fonction pour  capteurer un image a partir d’un camera USB:         
+ ###############fonction pour  capteurer un image a partir d’un camera USB:         
 def captur():
     call(["fswebcam","-d","/dev/vide0","-r","640*480","--no-banner","./11.jpg"])
-fonction de detection d'un fuit de gaz 
+###############fonction de detection d'un fuit de gaz 
 def presence_gaz():
     try:
         time.sleep(3)
-        while True:
-            if GPIO.input(24):
-                GPIO.output(23,True)
-                telegram_bot.sendMessage(chat_id,str("Attention!!!!, il ya un fuit de Gaz"))
-                GPIO.output(led3,True)
-                GPIO.output(buzzer , True)
-                if GPIO.output(led3,True):
-                    time.sleep(1)
-                    GPIO.output(led3, False)
-                    time.sleep(1)
-                time.sleep(10)
+        if GPIO.input(24): 
+           GPIO.output(23,True)
+           telegram_bot.sendMessage(chat_id,str("Attention!!!!, il ya un fuit de Gaz"))
+           GPIO.output(led3,True)
+           GPIO.output(buzzer , True)
+         else GPIO.output(led3,True):
+              time.sleep(1)
+              GPIO.output(led3, False)
+              time.sleep(1)
+             
                 GPIO.output(23,False)
                 time.sleep(5)
             time.sleep(0.5)
     except:
         GPIO.cleanup()
-fonction pour activé l'alarme
+###################fonction pour activé l'alarme
 def Buzzer_on():
     while True:
         GPIO.output(buzzer,GPIO.HIGHT)
@@ -77,11 +78,12 @@ def Buzzer_off():
         GPIO.output(buzzer,GPIO.LOW)
         print("STOP beep")
         time.sleep(5)
-fonction de musure la températeur et l'humidité##
+#######################fonction de musure la températeur et l'humidité##
 def temp_hum ():
     while True:
         humidity, temperature = Adafruit_DHT.read_retry(11,4)
-        return humidity
+       yield (humidity) 
+       yield (temperature) 
         print ('Temp:{0:0.1}C Humidity {1:0.1}%'.format(temperature,humidity))
         telegram_bot.sendMessage(chat_id,str("Temper:{0:0.1} C Humidity: {1:0.1 f} %"))
 fonction de l'ouverture de la porte :
@@ -93,16 +95,16 @@ fonction de l'ouverture de la porte :
     except KeyboardInterrupt :
         P.stop()
         GPIO.cleanup()
-fonction de fermeture de la porte :
+##################fonction de fermeture de la porte :
 def Clservo_moteur ():
     try:
        while True:
-                P.Chan   geDutyCycle(12.5) ##180 degreé:closed 
+                P.ChangeDutyCycle(12.5) ##180 degreé:closed 
                 time.sleep(3)
     except KeyboardInterrupt :
         P.stop()
         GPIO.cleanup()    ##rénitialisation##   
-identification des commandes avec le Telegram Mobile par l’utilisateur :
+#############################identification des commandes avec le Telegram Mobile par l’utilisateur :
 def action(msg):
     chat_id = msg['chat']['id']
     command = msg['text']
@@ -195,11 +197,11 @@ def action(msg):
 
 ####Paramétrage de Bot####
 
-telegram_bot = telepot.Bot('1178595733:AAG_mR6KSspDRBDhjc2WiDSlCJQQzZQ9Qpg')
+telegram_bot = telepot.Bot('copy your telegram token here ')
 print (telegram_bot.getMe())
 print (telegram_bot.getMe())
 MessageLoop(telegram_bot, action).run_as_thread()
 print('Up and Running....')
-telegram_bot.sendMessage (940205690, "up and running....")
+telegram_bot.sendMessage ('your -ID- ', "up and running....")
 while 1:
    time.sleep(10)    
